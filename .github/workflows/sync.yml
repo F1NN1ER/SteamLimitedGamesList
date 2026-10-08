@@ -1,8 +1,8 @@
 name: Sync Limited Status
 on:
   schedule:
-    - cron: '0 16 * * *'   # 北京时间 00:00（凌晨）
-
+    - cron: '0 4 * * *'    # 北京时间 12:00（中午）
+    - cron: '0 16 * * *'   # 北京时间 00:00（晚上）
   workflow_dispatch:
 
 permissions:
@@ -31,14 +31,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Download base database
+        run: |
+          mkdir -p /tmp/base
+          gh release download db --repo F1NN1ER/SteamAppListWithType --pattern data.db --dir /tmp/base --clobber || \
+            echo "下载基础数据库失败，跳过合并"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Sync database
         run: |
           if [ -f Data/data.db ]; then
-            python merge_database.py
+            if [ -f /tmp/base/data.db ]; then
+              python merge_database.py /tmp/base/data.db
+            fi
             python fetch_type_daily.py || python fetch_all_type.py
           else
-            echo "未找到数据库，下载基础数据库并执行全量同步"
-            python fetch_database.py
+            echo "未找到本地数据库，执行全量同步"
+            if [ -f /tmp/base/data.db ]; then
+              cp /tmp/base/data.db Data/data.db
+            fi
             python fetch_all_type.py
           fi
 
