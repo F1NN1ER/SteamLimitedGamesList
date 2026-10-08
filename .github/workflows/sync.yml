@@ -1,0 +1,66 @@
+name: Sync Limited Status
+on:
+  schedule:
+    - cron: '0 16 * * *'   # 北京时间 00:00（凌晨）
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Download database
+        run: |
+          mkdir -p Data
+          gh release download db --pattern data.db --dir Data --clobber || \
+            echo "未找到 release，将执行全量同步"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync database
+        run: |
+          if [ -f Data/data.db ]; then
+            python merge_database.py
+            python fetch_type_daily.py || python fetch_all_type.py
+          else
+            echo "未找到数据库，下载基础数据库并执行全量同步"
+            python fetch_database.py
+            python fetch_all_type.py
+          fi
+
+      - name: Upload database
+        if: always()
+        run: |
+          if [ -f Data/data.db ]; then
+            gh release create db --notes "Steam 受限情况数据库" 2>/dev/null || true
+            gh release upload db Data/data.db --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Export JSON
+        if: always()
+        run: python db_to_json.py
+
+      - name: Commit JSON
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Data/
+          git diff --staged --quiet || git commit -m "chore(data): 自动更新 JSON 数据"
+          git push
