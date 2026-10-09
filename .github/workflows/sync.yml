@@ -12,6 +12,8 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      PYTHONUNBUFFERED: '1'
 
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +47,7 @@ jobs:
             if [ -f /tmp/base/data.db ]; then
               python merge_database.py /tmp/base/data.db
             fi
+            echo "执行增量同步"
             python fetch_type_daily.py || python fetch_all_type.py
           else
             echo "未找到本地数据库，执行全量同步"

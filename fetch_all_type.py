@@ -14,6 +14,7 @@ MAX_RETRY = 3
 MAX_WORKERS = 24
 BATCH_SIZE = 500
 RESUME = True
+TIME_LIMIT = int(os.environ["FETCH_TIME_LIMIT"]) if os.environ.get("FETCH_TIME_LIMIT") else None
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_DIR = os.path.join(BASE_DIR, "Data")
@@ -40,7 +41,6 @@ def _get_session():
 def init_db():
     os.makedirs(DB_DIR, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
-    # 确保受限情况列存在（兼容基础数据库）
     cols = [r[1] for r in connection.execute("PRAGMA table_info(Info)")]
     if "limited_status" not in cols:
         connection.execute("ALTER TABLE Info ADD COLUMN limited_status text")
