@@ -14,6 +14,7 @@ MAX_RETRY = 3
 MAX_WORKERS = 24
 BATCH_SIZE = 500
 RESUME = True
+MAX_ITEMS = 50000
 TIME_LIMIT = int(os.environ["FETCH_TIME_LIMIT"]) if os.environ.get("FETCH_TIME_LIMIT") else None
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -110,9 +111,10 @@ def update_status_batch(connection, items):
 if __name__ == '__main__':
     print("开始全量获取产品受限情况")
     conn = init_db()
-    todo = get_todo(conn, resume=RESUME)
+    todo_all = get_todo(conn, resume=RESUME)
+    todo = todo_all[:MAX_ITEMS]
     total = len(todo)
-    print(f"待处理: {total}")
+    print(f"待处理: {total}/{len(todo_all)}{'（断点续跑）' if RESUME else '（全量重跑）'}")
 
     if total == 0:
         print("无待处理项")

@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fetch_all_type import (
     MAX_WORKERS,
     BATCH_SIZE,
+    MAX_ITEMS,
     init_db,
     get_app_limited_status,
     update_status_batch,
@@ -23,9 +24,10 @@ def get_todo(connection):
 if __name__ == '__main__':
     print("开始增量获取产品受限情况")
     conn = init_db()
-    todo = get_todo(conn)
+    todo_all = get_todo(conn)
+    todo = todo_all[:MAX_ITEMS]
     total = len(todo)
-    print(f"待处理: {total}")
+    print(f"待处理: {total}/{len(todo_all)}")
 
     if total == 0:
         print("无待处理项")
