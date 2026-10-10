@@ -12,9 +12,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 MAX_RETRY = 3
 MAX_WORKERS = 24
-BATCH_SIZE = 500
+BATCH_SIZE = 3
 RESUME = True
-MAX_ITEMS = 50000
+MAX_ITEMS = 5000
 TIME_LIMIT = int(os.environ["FETCH_TIME_LIMIT"]) if os.environ.get("FETCH_TIME_LIMIT") else None
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
